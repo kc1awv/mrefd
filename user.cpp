@@ -69,7 +69,7 @@ bool CUser::operator <(const CUser &user) const
 
 void CUser::WriteXml(std::ofstream &xmlFile)
 {
-	xmlFile << "<HeardUsers>" << std::endl;
+	xmlFile << "<Station>" << std::endl;
 	xmlFile << "\t<Callsign>" << m_Source << "</Callsign>" << std::endl;
 	xmlFile << "\t<ViaNode>" << m_Destination << "</ViaNode>" << std::endl;
 	xmlFile << "\t<OnModule>" << m_Reflector.GetModule() << "</OnModule>" << std::endl;
@@ -80,5 +80,5 @@ void CUser::WriteXml(std::ofstream &xmlFile)
 	{
 		xmlFile << "\t<LastHeardTime>" << mbstr << "</LastHeardTime>" << std::endl;
 	}
-	xmlFile << "</HeardUsers>" << std::endl;
+	xmlFile << "</Station>" << std::endl;
 }
