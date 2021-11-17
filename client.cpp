@@ -90,19 +90,19 @@ bool CClient::operator ==(const CClient &client) const
 
 void CClient::WriteXml(std::ofstream &xmlFile)
 {
-	xmlFile << "<Node>" << std::endl;
-	xmlFile << "\t<Callsign>" << m_Callsign << "</Callsign>" << std::endl;
-	xmlFile << "\t<IP>" << m_Ip.GetAddress() << "</IP>" << std::endl;
-	xmlFile << "\t<LinkedModule>" << m_ReflectorModule << "</LinkedModule>" << std::endl;
-	xmlFile << "\t<Protocol>" << GetProtocolName() << "</Protocol>" << std::endl;
+	xmlFile << "\t\t<Node>" << std::endl;
+	xmlFile << "\t\t\t<Callsign>" << m_Callsign << "</Callsign>" << std::endl;
+	xmlFile << "\t\t\t<IP>" << m_Ip.GetAddress() << "</IP>" << std::endl;
+	xmlFile << "\t\t\t<LinkedModule>" << m_ReflectorModule << "</LinkedModule>" << std::endl;
+	xmlFile << "\t\t\t<Protocol>" << GetProtocolName() << "</Protocol>" << std::endl;
 	char mbstr[100];
 	if (std::strftime(mbstr, sizeof(mbstr), "%c %Z", std::localtime(&m_ConnectTime)))
 	{
-		xmlFile << "\t<ConnectTime>" << mbstr << "</ConnectTime>" << std::endl;
+		xmlFile << "\t\t\t<ConnectTime>" << mbstr << "</ConnectTime>" << std::endl;
 	}
 	if (std::strftime(mbstr, sizeof(mbstr), "%c %Z", std::localtime(&m_LastHeardTime)))
 	{
-		xmlFile << "\t<LastHeardTime>" << mbstr << "</LastHeardTime>" << std::endl;
+		xmlFile << "\t\t\t<LastHeardTime>" << mbstr << "</LastHeardTime>" << std::endl;
 	}
-	xmlFile << "</Node>" << std::endl;
+	xmlFile << "\t\t</Node>" << std::endl;
 }

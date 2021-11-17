@@ -69,16 +69,16 @@ bool CUser::operator <(const CUser &user) const
 
 void CUser::WriteXml(std::ofstream &xmlFile)
 {
-	xmlFile << "<Station>" << std::endl;
-	xmlFile << "\t<Callsign>" << m_Source << "</Callsign>" << std::endl;
-	xmlFile << "\t<ViaNode>" << m_Destination << "</ViaNode>" << std::endl;
-	xmlFile << "\t<OnModule>" << m_Reflector.GetModule() << "</OnModule>" << std::endl;
-	xmlFile << "\t<ViaPeer>" << m_Reflector.GetCS(7) << "</ViaPeer>" << std::endl;
+	xmlFile << "\t\t<Station>" << std::endl;
+	xmlFile << "\t\t\t<Callsign>" << m_Source << "</Callsign>" << std::endl;
+	xmlFile << "\t\t\t<ViaNode>" << m_Destination << "</ViaNode>" << std::endl;
+	xmlFile << "\t\t\t<OnModule>" << m_Reflector.GetModule() << "</OnModule>" << std::endl;
+	xmlFile << "\t\t\t<ViaPeer>" << m_Reflector.GetCS(7) << "</ViaPeer>" << std::endl;
 
 	char mbstr[100];
 	if (std::strftime(mbstr, sizeof(mbstr), "%c %Z", std::localtime(&m_LastHeardTime)))
 	{
-		xmlFile << "\t<LastHeardTime>" << mbstr << "</LastHeardTime>" << std::endl;
+		xmlFile << "\t\t\t<LastHeardTime>" << mbstr << "</LastHeardTime>" << std::endl;
 	}
-	xmlFile << "</Station>" << std::endl;
+	xmlFile << "\t\t</Station>" << std::endl;
 }
