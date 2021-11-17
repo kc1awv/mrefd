@@ -112,7 +112,7 @@ void CPeer::Alive(void)
 
 void CPeer::WriteXml(std::ofstream &xmlFile)
 {
-	// xmlFile << "\t\t<Peer>" << std::endl;
+	xmlFile << "\t<LinkedPeer>" << std::endl;
 	xmlFile << "\t\t<Callsign>" << m_Callsign << "</Callsign>" << std::endl;
 	xmlFile << "\t\t<IP>" << m_Ip.GetAddress() << "</IP>" << std::endl;
 	xmlFile << "\t\t<LinkedModule>" << m_ReflectorModules << "</LinkedModule>" << std::endl;
@@ -126,5 +126,5 @@ void CPeer::WriteXml(std::ofstream &xmlFile)
 	{
 		xmlFile << "\t\t<LastHeardTime>" << mbstr << "</LastHeardTime>" << std::endl;
 	}
-	// xmlFile << "\t\t</Peer>" << std::endl;
+	xmlFile << "\t</LinkedPeer>" << std::endl;
 }
