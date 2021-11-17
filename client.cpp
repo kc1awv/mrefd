@@ -90,7 +90,7 @@ bool CClient::operator ==(const CClient &client) const
 
 void CClient::WriteXml(std::ofstream &xmlFile)
 {
-	xmlFile << "\t<LinkedNode" << m_Callsign << ">" << std::endl;
+	xmlFile << "\t<LinkedNode Callsign=" << m_Callsign << "\">" << std::endl;
 	xmlFile << "\t\t<Callsign>" << m_Callsign << "</Callsign>" << std::endl;
 	xmlFile << "\t\t<IP>" << m_Ip.GetAddress() << "</IP>" << std::endl;
 	xmlFile << "\t\t<LinkedModule>" << m_ReflectorModule << "</LinkedModule>" << std::endl;
