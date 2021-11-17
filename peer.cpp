@@ -112,19 +112,19 @@ void CPeer::Alive(void)
 
 void CPeer::WriteXml(std::ofstream &xmlFile)
 {
-	xmlFile << "\t\t<Peer>" << std::endl;
-	xmlFile << "\t\t\t<Callsign>" << m_Callsign << "</Callsign>" << std::endl;
-	xmlFile << "\t\t\t<IP>" << m_Ip.GetAddress() << "</IP>" << std::endl;
-	xmlFile << "\t\t\t<LinkedModule>" << m_ReflectorModules << "</LinkedModule>" << std::endl;
-	xmlFile << "\t\t\t<Protocol>" << GetProtocolName() << "</Protocol>" << std::endl;
+	// xmlFile << "\t\t<Peer>" << std::endl;
+	xmlFile << "\t\t<Callsign>" << m_Callsign << "</Callsign>" << std::endl;
+	xmlFile << "\t\t<IP>" << m_Ip.GetAddress() << "</IP>" << std::endl;
+	xmlFile << "\t\t<LinkedModule>" << m_ReflectorModules << "</LinkedModule>" << std::endl;
+	xmlFile << "\t\t<Protocol>" << GetProtocolName() << "</Protocol>" << std::endl;
 	char mbstr[100];
 	if (std::strftime(mbstr, sizeof(mbstr), "%A %c", std::localtime(&m_ConnectTime)))
 	{
-		xmlFile << "\t\t\t<ConnectTime>" << mbstr << "</ConnectTime>" << std::endl;
+		xmlFile << "\t\t<ConnectTime>" << mbstr << "</ConnectTime>" << std::endl;
 	}
 	if (std::strftime(mbstr, sizeof(mbstr), "%A %c", std::localtime(&m_LastHeardTime)))
 	{
-		xmlFile << "\t\t\t<LastHeardTime>" << mbstr << "</LastHeardTime>" << std::endl;
+		xmlFile << "\t\t<LastHeardTime>" << mbstr << "</LastHeardTime>" << std::endl;
 	}
-	xmlFile << "\t\t</Peer>" << std::endl;
+	// xmlFile << "\t\t</Peer>" << std::endl;
 }
