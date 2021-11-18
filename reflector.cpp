@@ -429,7 +429,7 @@ void CReflector::WriteXmlFile(std::ofstream &xmlFile)
 	xmlFile << "\t<Version>" << sz << "</Version>" << std::endl;
 
 	// linked peers
-	// xmlFile << "\t<LinkedPeers>" << std::endl;
+	xmlFile << "\t<LinkedPeers>" << std::endl;
 	// lock
 	CPeers *peers = GetPeers();
 	// iterate on peers
@@ -439,10 +439,10 @@ void CReflector::WriteXmlFile(std::ofstream &xmlFile)
 	}
 	// unlock
 	ReleasePeers();
-	// xmlFile << "\t</LinkedPeers>" << std::endl;
+	xmlFile << "\t</LinkedPeers>" << std::endl;
 
 	// linked nodes
-	// xmlFile << "\t<LinkedNodes>" << std::endl;
+	xmlFile << "\t<LinkedNodes>" << std::endl;
 	// lock
 	CClients *clients = GetClients();
 	// iterate on clients
@@ -455,10 +455,10 @@ void CReflector::WriteXmlFile(std::ofstream &xmlFile)
 	}
 	// unlock
 	ReleaseClients();
-	// xmlFile << "\t</LinkedNodes>" << std::endl;
+	xmlFile << "\t</LinkedNodes>" << std::endl;
 
 	// last heard users
-	// xmlFile << "\t<HeardUsers>" << std::endl;
+	xmlFile << "\t<HeardUsers>" << std::endl;
 	// lock
 	CUsers *users = GetUsers();
 	// iterate on users
@@ -468,7 +468,7 @@ void CReflector::WriteXmlFile(std::ofstream &xmlFile)
 	}
 	// unlock
 	ReleaseUsers();
-	// xmlFile << "\t</HeardUsers>" << std::endl;
+	xmlFile << "\t</HeardUsers>" << std::endl;
 
 	// closing tag
 	xmlFile << "</Reflector>" << std::endl;
