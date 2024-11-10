@@ -24,6 +24,8 @@
 #include <sys/stat.h>
 #include <csignal>
 
+#include <hiredis/hiredis.h>
+
 #include "reflector.h"
 #include "configure.h"
 #include "version.h"
@@ -70,8 +72,19 @@ int main(int argc, char *argv[])
 	// splash
 	std::cout << "Starting mrefd version #" << g_Version << std::endl;
 
+	redisContext *redis = redisConnect("127.0.0.1", 6379);
+	if (redis == nullptr || redis->err) {
+    	if (redis) {
+        	std::cerr << "Redis connection error: " << redis->errstr << std::endl;
+        	redisFree(redis);
+    	} else {
+        	std::cerr << "Redis connection allocation error." << std::endl;
+    	}
+    	return 1;
+	}
+
 	// and let it run
-	if ( g_Reflector.Start(argv[1]) )
+	if ( g_Reflector.Start(argv[1], redis) )
 	{
 		std::cout << "Error starting reflector" << std::endl;
 		return EXIT_FAILURE;
@@ -86,6 +99,9 @@ int main(int argc, char *argv[])
 	pause(); // wait for any signal
 
 	g_Reflector.Stop();
+	if (redis) {
+    	redisFree(redis);
+	}
 	std::cout << "Reflector stopped" << std::endl;
 
 	// done

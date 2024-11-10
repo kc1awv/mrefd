@@ -24,6 +24,8 @@
 #include <ctime>
 #include <string.h>
 
+#include <hiredis/hiredis.h>
+
 #include "user.h"
 
 
@@ -64,6 +66,44 @@ bool CUser::operator <(const CUser &user) const
 {
 	// smallest is youngest
 	return (std::difftime(m_LastHeardTime, user.m_LastHeardTime) > 0);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+// Redis
+
+void CUser::AddToRedis(redisContext *redis) const {
+    if (!redis) {
+        std::cerr << "AddToRedis: Null Redis context!" << std::endl;
+        return;
+    }
+
+	char mbstr[100]; // Declare the character buffer for timestamp formatting
+
+    std::string redisKey = "station:" + m_Source.GetCS();
+    redisReply *reply = (redisReply *)redisCommand(redis,
+        "HSET %s VIANODE %s ONMODULE %s VIAPEER %s LASTHEARDTIME %s",
+        redisKey.c_str(),
+        m_Destination.GetCS().c_str(),
+        std::string(1, m_Reflector.GetModule()).c_str(),
+        m_Reflector.GetCS(7).c_str(),
+        std::strftime(mbstr, sizeof(mbstr), "%FT%TZ", std::gmtime(&m_LastHeardTime)) ? mbstr : "N/A");
+	if (reply == nullptr) {
+        std::cerr << "Redis error: Unable to add station: " << m_Source.GetCS() << std::endl;
+    } else {
+        std::cout << "Station " << m_Source.GetCS() << " added to Redis." << std::endl;
+        freeReplyObject(reply);
+    }
+}
+
+void CUser::RemoveFromRedis(redisContext *redis) const {
+    if (!redis) {
+        std::cerr << "AddToRedis: Null Redis context!" << std::endl;
+        return;
+    }
+	
+    std::string redisKey = "station:" + m_Source.GetCS();
+    redisReply *reply = (redisReply *)redisCommand(redis, "DEL %s", redisKey.c_str());
+    if (reply) freeReplyObject(reply);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////

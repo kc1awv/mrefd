@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include <hiredis/hiredis.h>
+
 #include "peer.h"
 
 
@@ -50,8 +52,8 @@ public:
 
 	// manage peers
 	int  GetSize(void) const { return (int)m_Peers.size(); }
-	void AddPeer(std::shared_ptr<CPeer>);
-	void RemovePeer(std::shared_ptr<CPeer>);
+	void AddPeer(std::shared_ptr<CPeer>, redisContext *redis);
+	void RemovePeer(std::shared_ptr<CPeer>, redisContext *redis);
 
 	// pass-through
 	std::list<std::shared_ptr<CPeer>>::iterator begin()              { return m_Peers.begin(); }

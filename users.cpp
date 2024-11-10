@@ -26,6 +26,7 @@
 #include "defines.h"
 #include "users.h"
 #include "reflector.h"
+#include <hiredis/hiredis.h>
 
 extern CReflector g_Reflector;
 
@@ -37,10 +38,17 @@ CUsers::CUsers() {}
 ////////////////////////////////////////////////////////////////////////////////////////
 // users management
 
-void CUsers::AddUser(const CUser &user)
+void CUsers::AddUser(const CUser &user, redisContext *redis)
 {
 	// add
 	m_Users.push_front(user);
+
+	// Call AddToRedis to store the user in Redis
+    if (redis) {
+        user.AddToRedis(redis);
+    } else {
+        std::cerr << "AddUser: Redis context is null. Skipping Redis addition for user: " << user.GetSource() << std::endl;
+    }
 
 	// if list size too big, remove oldest
 	if ( m_Users.size() >= (LASTHEARD_USERS_MAX_SIZE-1) )
@@ -52,7 +60,7 @@ void CUsers::AddUser(const CUser &user)
 ////////////////////////////////////////////////////////////////////////////////////////
 // operation
 
-void CUsers::Hearing(const CCallsign &source, const CCallsign &destination, const CCallsign &reflector)
+void CUsers::Hearing(const CCallsign &source, const CCallsign &destination, const CCallsign &reflector, redisContext *redis)
 {
 	CUser heard(source, destination, reflector);
 
@@ -66,5 +74,5 @@ void CUsers::Hearing(const CCallsign &source, const CCallsign &destination, cons
 		}
 	}
 
-	AddUser(heard);
+	AddUser(heard, redis);
 }

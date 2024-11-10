@@ -23,6 +23,8 @@
 //    with this software.  If not, see <http://www.gnu.org/licenses/>.
 // ----------------------------------------------------------------------------
 
+#include <hiredis/hiredis.h>
+
 #include "reflector.h"
 #include "clients.h"
 #include "configure.h"
@@ -51,7 +53,7 @@ CClients::~CClients()
 ////////////////////////////////////////////////////////////////////////////////////////
 // manage Clients
 
-void CClients::AddClient(std::shared_ptr<CClient> client)
+void CClients::AddClient(std::shared_ptr<CClient> client, redisContext *redis)
 {
 	// first check if client already exists
 	for ( auto it=begin(); it!=end(); it++ )
@@ -74,9 +76,16 @@ void CClients::AddClient(std::shared_ptr<CClient> client)
 		std::cout << " on module " << client->GetReflectorModule();
 	}
 	std::cout << std::endl;
+
+	// Add to Redis
+    if (redis) {
+        client->AddToRedis(redis);
+    } else {
+        std::cerr << "AddClient: Redis context is null. Skipping Redis addition for client " << client->GetCallsign() << "." << std::endl;
+    }
 }
 
-void CClients::RemoveClient(std::shared_ptr<CClient> client)
+void CClients::RemoveClient(std::shared_ptr<CClient> client, redisContext *redis)
 {
 	// look for the client
 	bool found = false;
@@ -88,6 +97,13 @@ void CClients::RemoveClient(std::shared_ptr<CClient> client)
 			// found it !
 			if ( !(*it)->IsTransmitting() )
 			{
+				// Remove from Redis
+            	if (redis) {
+                	(*it)->RemoveFromRedis(redis);
+            	} else {
+                	std::cerr << "RemoveClient: Redis context is null. Skipping Redis removal for client " << (*it)->GetCallsign() << "." << std::endl;
+            	}
+				
 				// remove it
 				std::cout << "Client " << (*it)->GetCallsign() << " at " << (*it)->GetIp() << " removed with protocol " << (*it)->GetProtocolName();
 				if ( (*it)->GetReflectorModule() != ' ' )

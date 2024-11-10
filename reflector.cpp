@@ -28,6 +28,8 @@
 #include <fstream>
 #include <string.h>
 
+#include <hiredis/hiredis.h>
+
 #include "defines.h"
 #include "reflector.h"
 #include "gatekeeper.h"
@@ -75,7 +77,7 @@ CReflector::~CReflector()
 ////////////////////////////////////////////////////////////////////////////////////////
 // operation
 
-bool CReflector::Start(const char *cfgfilename)
+bool CReflector::Start(const char *cfgfilename, redisContext *redis)
 {
 	if (g_CFG.ReadData(cfgfilename))
 		return true;
@@ -126,7 +128,7 @@ bool CReflector::Start(const char *cfgfilename)
 #endif
 
 	// create protocols
-	if (! m_Protocol.Initialize(g_CFG.GetPort(), g_CFG.GetIPv4BindAddr(), g_CFG.GetIPv6BindAddr()))
+	if (! m_Protocol.Initialize(g_CFG.GetPort(), g_CFG.GetIPv4BindAddr(), g_CFG.GetIPv6BindAddr(), redis))
 	{
 		m_Protocol.Close();
 		return true;

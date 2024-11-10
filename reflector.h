@@ -44,7 +44,7 @@ public:
 	virtual ~CReflector();
 
 	// operation
-	bool Start(const char *cfgfilename);
+	bool Start(const char *cfgfilename, redisContext *redis);
 	void Stop(void);
 
 	// clients

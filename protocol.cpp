@@ -22,6 +22,8 @@
 //    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 // ----------------------------------------------------------------------------
 
+#include <hiredis/hiredis.h>
+
 #include "defines.h"
 #include "protocol.h"
 #include "clients.h"
@@ -65,7 +67,7 @@ CProtocol::~CProtocol()
 ////////////////////////////////////////////////////////////////////////////////////////
 // initialization
 
-bool CProtocol::Initialize(const uint16_t port, const std::string &strIPv4, const std::string &strIPv6)
+bool CProtocol::Initialize(const uint16_t port, const std::string &strIPv4, const std::string &strIPv6, redisContext *redis)
 {
 	// init reflector apparent callsign
 	m_ReflectorCallsign = g_CFG.GetCallsign();
@@ -117,7 +119,7 @@ bool CProtocol::Initialize(const uint16_t port, const std::string &strIPv4, cons
 	}
 
 	try {
-		m_Future = std::async(std::launch::async, &CProtocol::Thread, this);
+		m_Future = std::async(std::launch::async, &CProtocol::Thread, this, redis);
 	}
 	catch (const std::exception &e)
 	{
@@ -135,17 +137,17 @@ bool CProtocol::Initialize(const uint16_t port, const std::string &strIPv4, cons
 	return true;
 }
 
-void CProtocol::Thread()
+void CProtocol::Thread(redisContext *redis)
 {
 	while (keep_running)
 	{
-		Task();
+		Task(redis);
 	}
 }
 ////////////////////////////////////////////////////////////////////////////////////////
 // task
 
-void CProtocol::Task(void)
+void CProtocol::Task(redisContext *redis)
 {
 	uint8_t   buf[UDP_BUFFER_LENMAX];
 	CIp       ip;
@@ -165,7 +167,7 @@ void CProtocol::Task(void)
 		{
 			if (g_GateKeeper.MayTransmit(pack->GetSourceCallsign(), ip))
 			{
-				OnFirstPacketIn(pack, ip); // might open a new stream, if it's the first packet
+				OnFirstPacketIn(pack, ip, redis); // might open a new stream, if it's the first packet
 				if (pack)                  // the packet might have been erased
 				{                          // if it needed to open a new stream, but couldn't
 					OnPacketIn(pack, ip);
@@ -215,7 +217,7 @@ void CProtocol::Task(void)
 
 					// append the peer to reflector peer list
 					// this also add all new clients to reflector client list
-					peers->AddPeer(peer);
+					peers->AddPeer(peer, redis);
 					publish = true;
 				}
 				g_Reflector.ReleasePeers();
@@ -248,10 +250,10 @@ void CProtocol::Task(void)
 							EncodeConnectNackPacket(buf);
 							Send(buf, 4, ip);
 						} else {
-							g_Reflector.GetClients()->AddClient(std::make_shared<CClient>(cs, ip, mod, true));
+							g_Reflector.GetClients()->AddClient(std::make_shared<CClient>(cs, ip, mod, true), redis);
 						}
 					} else {
-						g_Reflector.GetClients()->AddClient(std::make_shared<CClient>(cs, ip, mod));
+						g_Reflector.GetClients()->AddClient(std::make_shared<CClient>(cs, ip, mod), redis);
 					}
 					g_Reflector.ReleaseClients();
 #ifndef NO_DHT
@@ -316,7 +318,7 @@ void CProtocol::Task(void)
 					EncodeDisconnectedPacket(buf);
 					Send(buf, 4, ip);
 					// and remove it
-					clients->RemoveClient(client);
+					clients->RemoveClient(client, redis);
 					removed_client = true;
 				}
 				g_Reflector.ReleaseClients();
@@ -335,7 +337,7 @@ void CProtocol::Task(void)
 					// remove it from reflector peer list
 					// this also remove all peer's clients from reflector client list
 					// and delete them
-					peers->RemovePeer(peer);
+					peers->RemovePeer(peer, redis);
 				}
 				g_Reflector.ReleasePeers();
 			}
@@ -359,7 +361,7 @@ void CProtocol::Task(void)
 	if ( m_LastKeepaliveTime.Time() > M17_KEEPALIVE_PERIOD )
 	{
 		// handle keep alives
-		HandleKeepalives();
+		HandleKeepalives(redis);
 
 		// update time
 		m_LastKeepaliveTime.Start();
@@ -369,7 +371,7 @@ void CProtocol::Task(void)
 	if ( m_LastPeersLinkTime.Time() > M17_RECONNECT_PERIOD )
 	{
 		// handle remote peers connections
-		HandlePeerLinks();
+		HandlePeerLinks(redis);
 
 		// update time
 		m_LastPeersLinkTime.Start();
@@ -637,7 +639,7 @@ void CProtocol::HandleQueue(void)
 ////////////////////////////////////////////////////////////////////////////////////////
 // keepalive helpers
 
-void CProtocol::HandleKeepalives(void)
+void CProtocol::HandleKeepalives(redisContext *redis)
 {
 	uint8_t keepalive[10];
 	EncodeKeepAlivePacket(keepalive);
@@ -680,7 +682,7 @@ void CProtocol::HandleKeepalives(void)
 
 				// remove it
 				std::cout << "Client " << client->GetCallsign() << " keepalive timeout" << std::endl;
-				clients->RemoveClient(client);
+				clients->RemoveClient(client, redis);
 				removed_client = true;
 			}
 			g_Reflector.ReleasePeers();
@@ -718,7 +720,7 @@ void CProtocol::HandleKeepalives(void)
 
 			// remove it
 			std::cout << "Peer " << peer->GetCallsign() << " keepalive timeout" << std::endl;
-			peers->RemovePeer(peer);
+			peers->RemovePeer(peer, redis);
 		}
 	}
 	g_Reflector.ReleasePeers();
@@ -727,7 +729,7 @@ void CProtocol::HandleKeepalives(void)
 ////////////////////////////////////////////////////////////////////////////////////////
 // Peers helpers
 
-void CProtocol::HandlePeerLinks(void)
+void CProtocol::HandlePeerLinks(redisContext *redis)
 {
 	// get the list of peers
 	g_IFile.Lock();
@@ -748,7 +750,7 @@ void CProtocol::HandlePeerLinks(void)
 			Send(buf, 10, peer->GetIp());
 			std::cout << "Sent disconnect packet to M17 peer " << cs << " at " << peer->GetIp() << std::endl;
 			// remove client
-			peers->RemovePeer(peer);
+			peers->RemovePeer(peer, redis);
 			publish = true;
 		}
 	}
@@ -823,7 +825,7 @@ void CProtocol::HandlePeerLinks(void)
 ////////////////////////////////////////////////////////////////////////////////////////
 // streams helpers
 
-void CProtocol::OnFirstPacketIn(std::unique_ptr<CPacket> &packet, const CIp &ip)
+void CProtocol::OnFirstPacketIn(std::unique_ptr<CPacket> &packet, const CIp &ip, redisContext *redis)
 {
 	// find the stream
 	auto stream = GetStream(packet->GetStreamId(), ip);
@@ -864,7 +866,7 @@ void CProtocol::OnFirstPacketIn(std::unique_ptr<CPacket> &packet, const CIp &ip)
 						from.SetModule(d);
 					auto ref = GetReflectorCallsign();
 					ref.SetModule(d);
-					g_Reflector.GetUsers()->Hearing(s, from, ref);
+					g_Reflector.GetUsers()->Hearing(s, from, ref, redis);
 					g_Reflector.ReleaseUsers();
 #ifndef NO_DHT
 					g_Reflector.PutDHTUsers();

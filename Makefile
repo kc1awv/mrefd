@@ -28,8 +28,8 @@ else
 CPORLN = cp -f
 endif
 
-CFLAGS += -c -W -std=c++17 -MMD -c
-LDFLAGS=-pthread
+CFLAGS += -c -W -std=c++17 -MMD -c -I/usr/include/hiredis
+LDFLAGS=-pthread -lhiredis
 
 ifeq ($(DEBUG), true)
 CFLAGS += -ggdb3

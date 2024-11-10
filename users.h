@@ -24,6 +24,8 @@
 #include <list>
 #include <mutex>
 
+#include <hiredis/hiredis.h>
+
 #include "user.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -40,7 +42,7 @@ public:
 
 	// management
 	int    GetSize(void) const          { return (int)m_Users.size(); }
-	void   AddUser(const CUser &);
+	void   AddUser(const CUser &, redisContext *redis);
 
 	// pass-through
 	std::list<CUser>::iterator begin()  { return m_Users.begin(); }
@@ -49,7 +51,7 @@ public:
 	std::list<CUser>::const_iterator cend()    { return m_Users.cend(); }
 
 	// operation
-	void   Hearing(const CCallsign &, const CCallsign &, const CCallsign &);
+	void   Hearing(const CCallsign &, const CCallsign &, const CCallsign &, redisContext *redis);
 
 protected:
 	// data

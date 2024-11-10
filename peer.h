@@ -28,6 +28,8 @@
 #include <list>
 #include <memory>
 
+#include <hiredis/hiredis.h>
+
 #include "version.h"
 #include "timer.h"
 #include "ip.h"
@@ -81,6 +83,10 @@ public:
 	std::list<std::shared_ptr<CClient>>::iterator end()                { return m_Clients.end(); }
 	std::list<std::shared_ptr<CClient>>::const_iterator cbegin() const { return m_Clients.cbegin(); }
 	std::list<std::shared_ptr<CClient>>::const_iterator cend() const   { return m_Clients.cend(); }
+
+	// Redis
+	void AddToRedis(redisContext *redis) const;
+	void RemoveFromRedis(redisContext *redis) const;
 
 	// reporting
 	virtual void WriteXml(std::ofstream &);

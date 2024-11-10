@@ -23,6 +23,8 @@
 //    with this software.  If not, see <http://www.gnu.org/licenses/>.
 // ----------------------------------------------------------------------------
 
+#include <hiredis/hiredis.h>
+
 #include "reflector.h"
 #include "peers.h"
 
@@ -46,7 +48,7 @@ CPeers::~CPeers()
 ////////////////////////////////////////////////////////////////////////////////////////
 // manage peers
 
-void CPeers::AddPeer(std::shared_ptr<CPeer> peer)
+void CPeers::AddPeer(std::shared_ptr<CPeer> peer, redisContext *redis)
 {
 	// first check if peer already exists
 	for ( auto it=begin(); it!=end(); it++ )
@@ -78,12 +80,19 @@ void CPeers::AddPeer(std::shared_ptr<CPeer> peer)
 	auto clients = g_Reflector.GetClients();
 	for ( auto cit=peer->cbegin(); cit!=peer->cend(); cit++ )
 	{
-		clients->AddClient(*cit);
+		clients->AddClient(*cit, redis);
 	}
 	g_Reflector.ReleaseClients();
+
+	// Add the peer to Redis
+    if (redis) {
+        peer->AddToRedis(redis);
+    } else {
+        std::cerr << "AddPeer: Null Redis context. Skipping Redis addition for peer " << peer->GetCallsign() << "." << std::endl;
+    }
 }
 
-void CPeers::RemovePeer(std::shared_ptr<CPeer> peer)
+void CPeers::RemovePeer(std::shared_ptr<CPeer> peer, redisContext *redis)
 {
 	// look for the client
 	for ( auto pit=begin(); pit!=end(); /*increment done in body */ )
@@ -97,11 +106,18 @@ void CPeers::RemovePeer(std::shared_ptr<CPeer> peer)
 			for ( auto cit=peer->begin(); cit!=peer->end(); cit++ )
 			{
 				// this also delete the client object
-				clients->RemoveClient(*cit);
+				clients->RemoveClient(*cit, redis);
 			}
 			// so clear it then
 			(*pit)->ClearClients();
 			g_Reflector.ReleaseClients();
+
+			// Remove the peer from Redis
+            if (redis) {
+                (*pit)->RemoveFromRedis(redis);
+            } else {
+                std::cerr << "RemovePeer: Null Redis context. Skipping Redis removal for peer " << (*pit)->GetCallsign() << "." << std::endl;
+            }
 
 			// remove it
 			std::cout << "Peer " << (*pit)->GetCallsign() << " at " << (*pit)->GetIp() << " removed" << std::endl;

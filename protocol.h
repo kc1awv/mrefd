@@ -29,6 +29,8 @@
 #include <future>
 #include <list>
 
+#include <hiredis/hiredis.h>
+
 #include <regex>
 #include "udpsocket.h"
 #include "packetstream.h"
@@ -50,7 +52,7 @@ public:
 	virtual ~CProtocol();
 
 	// initialization
-	bool Initialize(const uint16_t port, const std::string &ipv4bind, const std::string &ipv6bind);
+	bool Initialize(const uint16_t port, const std::string &ipv4bind, const std::string &ipv6bind, redisContext *redis);
 	void Close(void);
 
 	// queue
@@ -61,20 +63,20 @@ public:
 	const CCallsign &GetReflectorCallsign(void)const { return m_ReflectorCallsign; }
 
 	// task
-	void Thread(void);
-	void Task(void);
+	void Thread(redisContext *redis);
+	void Task(redisContext *redis);
 
 protected:
 	// queue helper
 	void HandleQueue(void);
 
 	// keepalive helpers
-	void HandlePeerLinks(void);
-	void HandleKeepalives(void);
+	void HandlePeerLinks(redisContext *redis);
+	void HandleKeepalives(redisContext *redis);
 
 	// stream helpers
 	void OnPacketIn(std::unique_ptr<CPacket> &, const CIp &);
-	void OnFirstPacketIn(std::unique_ptr<CPacket> &, const CIp &);
+	void OnFirstPacketIn(std::unique_ptr<CPacket> &, const CIp &, redisContext *redis);
 
 	// packet decoding helpers
 	bool IsValidConnect(const uint8_t *, CCallsign &, char *);

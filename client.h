@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include <hiredis/hiredis.h>
+
 #include "timer.h"
 #include "ip.h"
 #include "callsign.h"
@@ -71,6 +73,10 @@ public:
 	void SetTXModule(char c)                 { m_TXModule = c; }
 	void ClearTX(void)                       { m_TXModule = ' '; }
 	void Heard(void)                         { m_LastHeardTime = std::time(nullptr); }
+
+	// Redis
+	void AddToRedis(redisContext *redis) const;
+	void RemoveFromRedis(redisContext *redis) const;
 
 	// reporting
 	void WriteXml(std::ofstream &);

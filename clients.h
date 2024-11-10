@@ -26,6 +26,8 @@
 #include <mutex>
 #include <memory>
 
+#include <hiredis/hiredis.h>
+
 #include "client.h"
 
 
@@ -51,8 +53,8 @@ public:
 
 	// manage Clients
 	int     GetSize(void) const         { return (int)m_Clients.size(); }
-	void    AddClient(std::shared_ptr<CClient>);
-	void    RemoveClient(std::shared_ptr<CClient>);
+	void    AddClient(std::shared_ptr<CClient>, redisContext *redis);
+	void    RemoveClient(std::shared_ptr<CClient>, redisContext *redis);
 	bool    IsClient(std::shared_ptr<CClient>) const;
 
 	// pass-through

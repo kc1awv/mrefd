@@ -28,6 +28,8 @@
 #include <fstream>
 #include <string.h>
 
+#include <hiredis/hiredis.h>
+
 #include "defines.h"
 #include "client.h"
 #include "configure.h"
@@ -89,6 +91,56 @@ bool CClient::operator ==(const CClient &client) const
 	if (g_CFG.GetMCClients())
 		rval = rval && (client.m_Ip.GetPort() == m_Ip.GetPort());
 	return rval;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+// Redis
+
+void CClient::AddToRedis(redisContext *redis) const {
+    if (!redis) {
+        std::cerr << "AddToRedis: Null Redis context!" << std::endl;
+        return;
+    }
+
+    char mbstr[100]; // Buffer for timestamp formatting
+
+    std::string redisKey = "node:" + m_Callsign.GetCS(); // Use the node's callsign as the Redis key
+    redisReply *reply = (redisReply *)redisCommand(redis,
+        "HSET %s IP %s LINKEDMODULE %s PROTOCOL %s LISTENONLY %s CONNECTTIME %s LASTHEARDTIME %s",
+        redisKey.c_str(),
+        m_Ip.GetAddress(),
+        std::string(1, m_ReflectorModule).c_str(),
+        GetProtocolName(),
+        (IsListenOnly() ? "true" : "false"),
+        std::strftime(mbstr, sizeof(mbstr), "%FT%TZ", std::gmtime(&m_ConnectTime)) ? mbstr : "N/A",
+        std::strftime(mbstr, sizeof(mbstr), "%FT%TZ", std::gmtime(&m_LastHeardTime)) ? mbstr : "N/A");
+
+    if (reply == nullptr) {
+        std::cerr << "Redis error: Unable to add client: " << m_Callsign.GetCS() << std::endl;
+    } else {
+        std::cout << "Node " << m_Callsign.GetCS() << " added to Redis." << std::endl;
+        freeReplyObject(reply);
+    }
+}
+
+void CClient::RemoveFromRedis(redisContext *redis) const {
+    if (!redis) {
+        std::cerr << "RemoveFromRedis: Null Redis context!" << std::endl;
+        return;
+    }
+
+    std::string redisKey = "node:" + m_Callsign.GetCS(); // Use the node's callsign as the Redis key
+    redisReply *reply = (redisReply *)redisCommand(redis, "DEL %s", redisKey.c_str());
+
+    if (reply == nullptr) {
+        std::cerr << "Redis error: Unable to delete client: " << m_Callsign.GetCS() << std::endl;
+    } else if (reply->integer == 1) {
+        std::cout << "Node " << m_Callsign.GetCS() << " removed from Redis." << std::endl;
+    } else {
+        std::cout << "Node " << m_Callsign.GetCS() << " not found in Redis." << std::endl;
+    }
+
+    if (reply) freeReplyObject(reply);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////

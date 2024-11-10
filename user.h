@@ -26,6 +26,8 @@
 
 #include <ctime>
 
+#include <hiredis/hiredis.h>
+
 #include "callsign.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -50,6 +52,10 @@ public:
 	// operators
 	bool operator ==(const CUser &) const;
 	bool operator <(const CUser &) const;
+
+	// Redis
+	void AddToRedis(redisContext *redis) const;
+	void RemoveFromRedis(redisContext *redis) const;
 
 	// reporting
 	void WriteXml(std::ofstream &);
