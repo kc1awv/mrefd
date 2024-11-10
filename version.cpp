@@ -85,5 +85,8 @@ std::ostream &operator <<(std::ostream &os, const CVersion &v)
 #ifndef NO_DHT
 	os << "-dht";
 #endif
+#ifndef NO_REDIS
+	os << "-redis";
+#endif
 	return os;
 };
