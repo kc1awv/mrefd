@@ -77,7 +77,11 @@ CReflector::~CReflector()
 ////////////////////////////////////////////////////////////////////////////////////////
 // operation
 
+#ifdef USE_REDIS
 bool CReflector::Start(const char *cfgfilename, redisContext *redis)
+#else
+bool CReflector::Start(const char *cfgfilename)
+#endif
 {
 	if (g_CFG.ReadData(cfgfilename))
 		return true;
@@ -128,7 +132,11 @@ bool CReflector::Start(const char *cfgfilename, redisContext *redis)
 #endif
 
 	// create protocols
+	#ifdef USE_REDIS
 	if (! m_Protocol.Initialize(g_CFG.GetPort(), g_CFG.GetIPv4BindAddr(), g_CFG.GetIPv6BindAddr(), redis))
+	#else
+	if (! m_Protocol.Initialize(g_CFG.GetPort(), g_CFG.GetIPv4BindAddr(), g_CFG.GetIPv6BindAddr()))
+	#endif
 	{
 		m_Protocol.Close();
 		return true;

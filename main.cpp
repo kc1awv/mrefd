@@ -72,6 +72,7 @@ int main(int argc, char *argv[])
 	// splash
 	std::cout << "Starting mrefd version #" << g_Version << std::endl;
 
+	#ifdef USE_REDIS
 	redisContext *redis = redisConnect("127.0.0.1", 6379);
 	if (redis == nullptr || redis->err) {
     	if (redis) {
@@ -80,11 +81,16 @@ int main(int argc, char *argv[])
     	} else {
         	std::cerr << "Redis connection allocation error." << std::endl;
     	}
-    	return 1;
+    	redis = nullptr; // Ensure safe handling when Redis is disabled
 	}
+	#endif
 
 	// and let it run
+	#ifdef USE_REDIS
 	if ( g_Reflector.Start(argv[1], redis) )
+	#else
+	if ( g_Reflector.Start(argv[1]) )
+	#endif
 	{
 		std::cout << "Error starting reflector" << std::endl;
 		return EXIT_FAILURE;
@@ -99,9 +105,11 @@ int main(int argc, char *argv[])
 	pause(); // wait for any signal
 
 	g_Reflector.Stop();
+	#ifdef USE_REDIS
 	if (redis) {
     	redisFree(redis);
 	}
+	#endif
 	std::cout << "Reflector stopped" << std::endl;
 
 	// done

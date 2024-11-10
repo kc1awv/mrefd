@@ -93,6 +93,7 @@ bool CClient::operator ==(const CClient &client) const
 	return rval;
 }
 
+#ifdef USE_REDIS
 ////////////////////////////////////////////////////////////////////////////////////////
 // Redis
 
@@ -142,6 +143,7 @@ void CClient::RemoveFromRedis(redisContext *redis) const {
 
     if (reply) freeReplyObject(reply);
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // reporting

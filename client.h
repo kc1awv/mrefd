@@ -22,7 +22,9 @@
 
 #pragma once
 
+#ifdef USE_REDIS
 #include <hiredis/hiredis.h>
+#endif
 
 #include "timer.h"
 #include "ip.h"
@@ -74,9 +76,11 @@ public:
 	void ClearTX(void)                       { m_TXModule = ' '; }
 	void Heard(void)                         { m_LastHeardTime = std::time(nullptr); }
 
+	#ifdef USE_REDIS
 	// Redis
 	void AddToRedis(redisContext *redis) const;
 	void RemoveFromRedis(redisContext *redis) const;
+	#endif
 
 	// reporting
 	void WriteXml(std::ofstream &);

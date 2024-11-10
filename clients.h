@@ -53,8 +53,13 @@ public:
 
 	// manage Clients
 	int     GetSize(void) const         { return (int)m_Clients.size(); }
+	#ifdef USE_REDIS
 	void    AddClient(std::shared_ptr<CClient>, redisContext *redis);
 	void    RemoveClient(std::shared_ptr<CClient>, redisContext *redis);
+	#else
+	void    AddClient(std::shared_ptr<CClient>);
+	void    RemoveClient(std::shared_ptr<CClient>);
+	#endif
 	bool    IsClient(std::shared_ptr<CClient>) const;
 
 	// pass-through

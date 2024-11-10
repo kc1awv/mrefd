@@ -28,8 +28,8 @@ else
 CPORLN = cp -f
 endif
 
-CFLAGS += -c -W -std=c++17 -MMD -c -I/usr/include/hiredis
-LDFLAGS=-pthread -lhiredis
+CFLAGS += -c -W -std=c++17 -MMD -c
+LDFLAGS=-pthread
 
 ifeq ($(DEBUG), true)
 CFLAGS += -ggdb3
@@ -39,6 +39,13 @@ ifeq ($(DHT), true)
 LDFLAGS += -lopendht -lcurl
 else
 CFLAGS += -DNO_DHT
+endif
+
+ifeq ($(REDIS), true)
+LDFLAGS += -lhiredis
+CFLAGS += -I/usr/include/hiredis -DUSE_REDIS
+else
+CFLAGS += -DNO_REDIS
 endif
 
 ifeq ($(DAEMON), true)

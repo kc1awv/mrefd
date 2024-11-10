@@ -24,7 +24,9 @@
 #include <ctime>
 #include <string.h>
 
+#ifdef USE_REDIS
 #include <hiredis/hiredis.h>
+#endif
 
 #include "user.h"
 
@@ -68,6 +70,7 @@ bool CUser::operator <(const CUser &user) const
 	return (std::difftime(m_LastHeardTime, user.m_LastHeardTime) > 0);
 }
 
+#ifdef USE_REDIS
 ////////////////////////////////////////////////////////////////////////////////////////
 // Redis
 
@@ -94,17 +97,7 @@ void CUser::AddToRedis(redisContext *redis) const {
         freeReplyObject(reply);
     }
 }
-
-void CUser::RemoveFromRedis(redisContext *redis) const {
-    if (!redis) {
-        std::cerr << "AddToRedis: Null Redis context!" << std::endl;
-        return;
-    }
-	
-    std::string redisKey = "station:" + m_Source.GetCS();
-    redisReply *reply = (redisReply *)redisCommand(redis, "DEL %s", redisKey.c_str());
-    if (reply) freeReplyObject(reply);
-}
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // reporting

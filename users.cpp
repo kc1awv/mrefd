@@ -38,17 +38,23 @@ CUsers::CUsers() {}
 ////////////////////////////////////////////////////////////////////////////////////////
 // users management
 
+#ifdef USE_REDIS
 void CUsers::AddUser(const CUser &user, redisContext *redis)
+#else
+void CUsers::AddUser(const CUser &user)
+#endif
 {
 	// add
 	m_Users.push_front(user);
 
+	#ifdef USE_REDIS
 	// Call AddToRedis to store the user in Redis
     if (redis) {
         user.AddToRedis(redis);
     } else {
         std::cerr << "AddUser: Redis context is null. Skipping Redis addition for user: " << user.GetSource() << std::endl;
     }
+	#endif
 
 	// if list size too big, remove oldest
 	if ( m_Users.size() >= (LASTHEARD_USERS_MAX_SIZE-1) )
@@ -60,7 +66,11 @@ void CUsers::AddUser(const CUser &user, redisContext *redis)
 ////////////////////////////////////////////////////////////////////////////////////////
 // operation
 
+#ifdef USE_REDIS
 void CUsers::Hearing(const CCallsign &source, const CCallsign &destination, const CCallsign &reflector, redisContext *redis)
+#else
+void CUsers::Hearing(const CCallsign &source, const CCallsign &destination, const CCallsign &reflector)
+#endif
 {
 	CUser heard(source, destination, reflector);
 
@@ -74,5 +84,9 @@ void CUsers::Hearing(const CCallsign &source, const CCallsign &destination, cons
 		}
 	}
 
+	#ifdef USE_REDIS
 	AddUser(heard, redis);
+	#else
+	AddUser(heard);
+	#endif
 }

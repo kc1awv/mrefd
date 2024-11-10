@@ -84,9 +84,11 @@ public:
 	std::list<std::shared_ptr<CClient>>::const_iterator cbegin() const { return m_Clients.cbegin(); }
 	std::list<std::shared_ptr<CClient>>::const_iterator cend() const   { return m_Clients.cend(); }
 
+	#ifdef USE_REDIS
 	// Redis
 	void AddToRedis(redisContext *redis) const;
 	void RemoveFromRedis(redisContext *redis) const;
+	#endif
 
 	// reporting
 	virtual void WriteXml(std::ofstream &);

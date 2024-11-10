@@ -26,7 +26,9 @@
 #include <iostream>
 #include <fstream>
 
+#ifdef USE_REDIS
 #include <hiredis/hiredis.h>
+#endif
 
 #include <string.h>
 #include "reflector.h"
@@ -117,6 +119,7 @@ void CPeer::Alive(void)
 	}
 }
 
+#ifdef USE_REDIS
 ////////////////////////////////////////////////////////////////////////////////////////
 // Redis
 
@@ -165,6 +168,7 @@ void CPeer::RemoveFromRedis(redisContext *redis) const {
 
     if (reply) freeReplyObject(reply);
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // reporting

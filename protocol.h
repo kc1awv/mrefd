@@ -52,7 +52,11 @@ public:
 	virtual ~CProtocol();
 
 	// initialization
+	#ifdef USE_REDIS
 	bool Initialize(const uint16_t port, const std::string &ipv4bind, const std::string &ipv6bind, redisContext *redis);
+	#else
+	bool Initialize(const uint16_t port, const std::string &ipv4bind, const std::string &ipv6bind);
+	#endif
 	void Close(void);
 
 	// queue
@@ -63,20 +67,34 @@ public:
 	const CCallsign &GetReflectorCallsign(void)const { return m_ReflectorCallsign; }
 
 	// task
+	#ifdef USE_REDIS
 	void Thread(redisContext *redis);
 	void Task(redisContext *redis);
+	#else
+	void Thread(void);
+	void Task(void);
+	#endif
 
 protected:
 	// queue helper
 	void HandleQueue(void);
 
 	// keepalive helpers
+	#ifdef USE_REDIS
 	void HandlePeerLinks(redisContext *redis);
 	void HandleKeepalives(redisContext *redis);
+	#else
+	void HandlePeerLinks(void);
+	void HandleKeepalives(void);
+	#endif
 
 	// stream helpers
 	void OnPacketIn(std::unique_ptr<CPacket> &, const CIp &);
+	#ifdef USE_REDIS
 	void OnFirstPacketIn(std::unique_ptr<CPacket> &, const CIp &, redisContext *redis);
+	#else
+	void OnFirstPacketIn(std::unique_ptr<CPacket> &, const CIp &);
+	#endif
 
 	// packet decoding helpers
 	bool IsValidConnect(const uint8_t *, CCallsign &, char *);

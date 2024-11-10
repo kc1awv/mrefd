@@ -26,7 +26,9 @@
 
 #include <ctime>
 
+#ifdef USE_REDIS
 #include <hiredis/hiredis.h>
+#endif
 
 #include "callsign.h"
 
@@ -53,9 +55,11 @@ public:
 	bool operator ==(const CUser &) const;
 	bool operator <(const CUser &) const;
 
+	#ifdef USE_REDIS
 	// Redis
 	void AddToRedis(redisContext *redis) const;
 	void RemoveFromRedis(redisContext *redis) const;
+	#endif
 
 	// reporting
 	void WriteXml(std::ofstream &);

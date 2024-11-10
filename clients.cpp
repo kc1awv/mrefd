@@ -53,7 +53,11 @@ CClients::~CClients()
 ////////////////////////////////////////////////////////////////////////////////////////
 // manage Clients
 
+#ifdef USE_REDIS
 void CClients::AddClient(std::shared_ptr<CClient> client, redisContext *redis)
+#else
+void CClients::AddClient(std::shared_ptr<CClient> client)
+#endif
 {
 	// first check if client already exists
 	for ( auto it=begin(); it!=end(); it++ )
@@ -77,15 +81,21 @@ void CClients::AddClient(std::shared_ptr<CClient> client, redisContext *redis)
 	}
 	std::cout << std::endl;
 
+	#ifdef USE_REDIS
 	// Add to Redis
     if (redis) {
         client->AddToRedis(redis);
     } else {
         std::cerr << "AddClient: Redis context is null. Skipping Redis addition for client " << client->GetCallsign() << "." << std::endl;
     }
+	#endif
 }
 
+#ifdef USE_REDIS
 void CClients::RemoveClient(std::shared_ptr<CClient> client, redisContext *redis)
+#else
+void CClients::RemoveClient(std::shared_ptr<CClient> client)
+#endif
 {
 	// look for the client
 	bool found = false;
@@ -97,12 +107,14 @@ void CClients::RemoveClient(std::shared_ptr<CClient> client, redisContext *redis
 			// found it !
 			if ( !(*it)->IsTransmitting() )
 			{
+				#ifdef USE_REDIS
 				// Remove from Redis
             	if (redis) {
                 	(*it)->RemoveFromRedis(redis);
             	} else {
                 	std::cerr << "RemoveClient: Redis context is null. Skipping Redis removal for client " << (*it)->GetCallsign() << "." << std::endl;
             	}
+				#endif
 				
 				// remove it
 				std::cout << "Client " << (*it)->GetCallsign() << " at " << (*it)->GetIp() << " removed with protocol " << (*it)->GetProtocolName();

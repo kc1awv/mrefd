@@ -25,7 +25,9 @@
 
 #pragma once
 
+#ifdef USE_REDIS
 #include <hiredis/hiredis.h>
+#endif
 
 #include "peer.h"
 
@@ -52,8 +54,13 @@ public:
 
 	// manage peers
 	int  GetSize(void) const { return (int)m_Peers.size(); }
+	#ifdef USE_REDIS
 	void AddPeer(std::shared_ptr<CPeer>, redisContext *redis);
 	void RemovePeer(std::shared_ptr<CPeer>, redisContext *redis);
+	#else
+	void AddPeer(std::shared_ptr<CPeer>);
+	void RemovePeer(std::shared_ptr<CPeer>);
+	#endif
 
 	// pass-through
 	std::list<std::shared_ptr<CPeer>>::iterator begin()              { return m_Peers.begin(); }
