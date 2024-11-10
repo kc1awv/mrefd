@@ -46,10 +46,11 @@ public:
 	// operation
 	#ifdef USE_REDIS
 	bool Start(const char *cfgfilename, redisContext *redis);
+	void Stop(redisContext *redis);
 	#else
 	bool Start(const char *cfgfilename);
-	#endif
 	void Stop(void);
+	#endif
 
 	// clients
 	CClients  *GetClients(void)                     { m_Clients.Lock(); return &m_Clients; }

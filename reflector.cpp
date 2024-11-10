@@ -28,7 +28,11 @@
 #include <fstream>
 #include <string.h>
 
+#ifdef USE_REDIS
 #include <hiredis/hiredis.h>
+#include <thread>
+#include <chrono>
+#endif
 
 #include "defines.h"
 #include "reflector.h"
@@ -73,6 +77,29 @@ CReflector::~CReflector()
 	}
 }
 
+#ifdef USE_REDIS
+////////////////////////////////////////////////////////////////////////////////////////
+// Redis heartbeat
+
+void Heartbeat(redisContext *redis, const std::string &callsign) {
+    std::string redisKey = "reflector:" + callsign + ":RUNNING";
+
+    while (true) {
+        if (redis) {
+            redisReply *reply = (redisReply *)redisCommand(redis,
+                "SET %s 'true' EX 15",
+                redisKey.c_str());
+
+            if (reply == nullptr) {
+                std::cerr << "Heartbeat: Failed to refresh RUNNING flag in Redis." << std::endl;
+                break; // Exit loop on error
+            }
+            freeReplyObject(reply);
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(10)); // Refresh every 10 seconds
+    }
+}
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // operation
@@ -90,6 +117,41 @@ bool CReflector::Start(const char *cfgfilename)
 
 	// init gate keeper. It can only return true!
 	g_GateKeeper.Init();
+
+#ifdef USE_REDIS
+	std::string callsign = g_CFG.GetCallsign();
+	std::string version = g_Version.ToString();
+
+	if (redis) {
+        // Store call sign and version in Redis
+        std::string redisKey = "reflector:" + callsign;
+        redisReply *reply = (redisReply *)redisCommand(redis,
+            "HSET %s CALLSIGN %s VERSION %s",
+            redisKey.c_str(),
+            callsign.c_str(),
+            version.c_str());
+
+        if (reply == nullptr) {
+            std::cerr << "Redis error: Unable to store reflector info." << std::endl;
+        } else {
+            std::cout << "Reflector callsign and version stored in Redis: " << redisKey << std::endl;
+            freeReplyObject(reply);
+        }
+
+		// Set RUNNING flag with a timeout of 15 seconds
+    	reply = (redisReply *)redisCommand(redis,
+        	"SET %s:RUNNING 'true EX 15",
+        	redisKey.c_str());
+
+    	if (reply == nullptr) {
+        	std::cerr << "Redis error: Unable to set RUNNING flag." << std::endl;
+    	} else {
+        	std::cout << "Reflector RUNNING flag set in Redis with expiration." << std::endl;
+        	freeReplyObject(reply);
+    	}
+    }
+	std::thread(Heartbeat, redis, callsign).detach();
+#endif
 
 #ifndef NO_DHT
 	// start the dht instance
@@ -160,7 +222,11 @@ bool CReflector::Start(const char *cfgfilename)
 	return false;
 }
 
+#ifdef USE_REDIS
+void CReflector::Stop(redisContext *redis)
+#else
 void CReflector::Stop(void)
+#endif
 {
 	// stop & delete all threads
 	keep_running = false;
@@ -216,6 +282,52 @@ void CReflector::Stop(void)
 	node.cancelPut(refhash, toUType(EMrefdValueID::Users));
 	node.shutdown({}, true);
 	node.join();
+#endif
+
+#ifdef USE_REDIS
+    if (redis) {
+		// Remove the RUNNING key
+        std::string callsign = g_CFG.GetCallsign();
+        std::string runningKey = "reflector:" + callsign + ":RUNNING";
+
+        redisReply *reply = (redisReply *)redisCommand(redis, "DEL %s", runningKey.c_str());
+        if (reply == nullptr) {
+            std::cerr << "Redis error: Unable to delete RUNNING key for reflector." << std::endl;
+        } else {
+            std::cout << "Removed RUNNING key for reflector: " << runningKey << std::endl;
+            freeReplyObject(reply); // Free memory here
+        }
+
+        // Remove all nodes
+        redisReply *nodesReply = (redisReply *)redisCommand(redis, "KEYS node:*");
+        if (nodesReply && nodesReply->type == REDIS_REPLY_ARRAY) {
+            for (size_t i = 0; i < nodesReply->elements; i++) {
+                std::string key = nodesReply->element[i]->str;
+                redisReply *delReply = (redisReply *)redisCommand(redis, "DEL %s", key.c_str());
+                if (delReply) {
+                    freeReplyObject(delReply); // Free memory here
+                    std::cout << "Removed node key: " << key << std::endl;
+                }
+            }
+        }
+        if (nodesReply) freeReplyObject(nodesReply); // Free memory here
+
+        // Remove all peers
+        redisReply *peersReply = (redisReply *)redisCommand(redis, "KEYS peer:*");
+        if (peersReply && peersReply->type == REDIS_REPLY_ARRAY) {
+            for (size_t i = 0; i < peersReply->elements; i++) {
+                std::string key = peersReply->element[i]->str;
+                redisReply *delReply = (redisReply *)redisCommand(redis, "DEL %s", key.c_str());
+                if (delReply) {
+                    freeReplyObject(delReply); // Free memory here
+                    std::cout << "Removed peer key: " << key << std::endl;
+                }
+            }
+        }
+        if (peersReply) freeReplyObject(peersReply); // Free memory here
+    }
+
+    std::cout << "Cleanup completed. All keys removed from Redis." << std::endl;
 #endif
 }
 

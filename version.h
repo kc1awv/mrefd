@@ -28,6 +28,10 @@
 #include <cstdint>
 #include <iostream>
 
+#ifdef USE_REDIS
+#include <string>
+#endif
+
 class CVersion
 {
 public:
@@ -39,6 +43,11 @@ public:
 	int GetMinor(void) const;
 	int GetRevision(void) const;
 	int GetVersion(void) const;
+
+	#ifdef USE_REDIS
+	// tostring for Redis
+	std::string ToString() const;
+	#endif
 
 	// comparison operators
 	bool operator ==(const CVersion &v) const;

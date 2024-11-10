@@ -78,6 +78,24 @@ bool CVersion::operator <(const CVersion &v) const
 	return v.version  < version;
 }
 
+#ifdef USE_REDIS
+std::string CVersion::ToString() const
+{
+    std::string versionString = std::to_string(GetMajor()) + "." +
+                                std::to_string(GetMinor()) + "." +
+                                std::to_string(GetRevision());
+
+#ifndef NO_DHT
+    versionString += "-dht";
+#endif
+#ifndef NO_REDIS
+    versionString += "-redis";
+#endif
+
+    return versionString;
+}
+#endif
+
 // output
 std::ostream &operator <<(std::ostream &os, const CVersion &v)
 {

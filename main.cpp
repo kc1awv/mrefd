@@ -104,13 +104,17 @@ int main(int argc, char *argv[])
 
 	pause(); // wait for any signal
 
-	g_Reflector.Stop();
 	#ifdef USE_REDIS
+	g_Reflector.Stop(redis);
 	if (redis) {
     	redisFree(redis);
 	}
-	#endif
 	std::cout << "Reflector stopped" << std::endl;
+	#else
+	g_Reflector.Stop();
+	std::cout << "Reflector stopped" << std::endl;
+	#endif
+	
 
 	// done
 	return EXIT_SUCCESS;
